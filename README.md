@@ -2,7 +2,7 @@
 
 > Encrypted, wallet-owned, decentralized pastebin built on Walrus + Sui + Tatum
 
-**Live demo:** _deploy to Vercel or walrus.site_
+**Live demo:** walruspaste.vercel.app
 
 ---
 
