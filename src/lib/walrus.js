@@ -1,7 +1,7 @@
 // ─── Walrus Config ─────────────────────────────────────────────────────────
-export const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space'
-export const WALRUS_AGGREGATOR = 'https://aggregator.walrus-testnet.walrus.space'
-export const TATUM_RPC = 'https://sui-testnet.gateway.tatum.io'
+export const WALRUS_PUBLISHER = 'https://publisher.walrus.space'
+export const WALRUS_AGGREGATOR = 'https://aggregator.walrus.space'
+export const TATUM_RPC = 'https://sui-mainnet.gateway.tatum.io'
 // Replace with your actual Tatum API key from dashboard.tatum.io
 export const TATUM_API_KEY = import.meta.env.VITE_TATUM_API_KEY || ''
 
