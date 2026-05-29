@@ -19,7 +19,7 @@
 | Layer | Tech |
 |---|---|
 | Frontend | React + Vite |
-| Blockchain | Sui (testnet / mainnet) |
+| Blockchain | Sui mainnet |
 | Storage | Walrus decentralized blob store |
 | RPC | Tatum Sui nodes |
 | Wallet | @mysten/dapp-kit |
@@ -55,7 +55,7 @@ Uses the Walrus HTTP publisher and aggregator endpoints:
 
 ## Tatum integration
 
-Uses Tatum's Sui testnet RPC (`https://sui-testnet.gateway.tatum.io`) to:
+Uses Tatum's Sui mainnet RPC (`https://sui-mainnet.gateway.tatum.io`) to:
 - Call `sui_getObject` on the Walrus blob's Sui object ID
 - Show a verified on-chain badge with a link to SuiScan
 
@@ -63,12 +63,12 @@ Uses Tatum's Sui testnet RPC (`https://sui-testnet.gateway.tatum.io`) to:
 
 - [x] Tatum API key + Sui RPC nodes used
 - [x] Walrus storage is core functionality (not an add-on)
-- [x] Built on Sui Testnet (switch `WALRUS_PUBLISHER` URL for mainnet)
+- [x] Built on Sui mainnet
 - [x] GitHub repo + demo video
 
-## Deploying to mainnet
+## Mainnet endpoints
 
-Change these constants in `src/lib/walrus.js`:
+These constants in `src/lib/walrus.js` are configured for mainnet:
 ```js
 export const WALRUS_PUBLISHER = 'https://publisher.walrus.space'
 export const WALRUS_AGGREGATOR = 'https://aggregator.walrus.space'

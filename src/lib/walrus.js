@@ -5,7 +5,7 @@ export const TATUM_RPC = 'https://sui-mainnet.gateway.tatum.io'
 // Replace with your actual Tatum API key from dashboard.tatum.io
 export const TATUM_API_KEY = import.meta.env.VITE_TATUM_API_KEY || ''
 
-// Storage epochs (1 epoch ≈ 1 day on testnet, ~1 week on mainnet)
+// Storage epochs are controlled by the active Walrus network.
 export const DEFAULT_EPOCHS = 10
 
 // ─── Encryption Helpers ────────────────────────────────────────────────────
@@ -44,6 +44,50 @@ export async function decryptBytes(packedBytes, key) {
   const ciphertext = packedBytes.slice(12)
   const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext)
   return new TextDecoder().decode(plaintext)
+}
+
+const ENCRYPTED_FORMAT_MAGIC = 'WPASTE1\n'
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+
+export function packEncryptedPaste(metadata, encryptedBytes) {
+  const magicBytes = encoder.encode(ENCRYPTED_FORMAT_MAGIC)
+  const metaBytes = encoder.encode(JSON.stringify(metadata))
+  const header = new Uint8Array(magicBytes.length + 4)
+  header.set(magicBytes, 0)
+  new DataView(header.buffer).setUint32(magicBytes.length, metaBytes.length, false)
+
+  const packed = new Uint8Array(header.length + metaBytes.length + encryptedBytes.length)
+  packed.set(header, 0)
+  packed.set(metaBytes, header.length)
+  packed.set(encryptedBytes, header.length + metaBytes.length)
+  return packed
+}
+
+export function unpackEncryptedPaste(bytes) {
+  const magicBytes = encoder.encode(ENCRYPTED_FORMAT_MAGIC)
+  const hasMagic = magicBytes.every((byte, index) => bytes[index] === byte)
+
+  if (!hasMagic) {
+    const metaBytes = bytes.slice(0, 512)
+    const metaStr = decoder.decode(metaBytes).trim()
+    let metadata = {}
+    try { metadata = JSON.parse(metaStr) } catch {}
+    return { metadata, encryptedBytes: bytes.slice(512) }
+  }
+
+  const metaLengthOffset = magicBytes.length
+  if (bytes.length < metaLengthOffset + 4) {
+    throw new Error('Invalid encrypted paste format')
+  }
+  const metaLength = new DataView(bytes.buffer, bytes.byteOffset + metaLengthOffset, 4).getUint32(0, false)
+  const metaStart = metaLengthOffset + 4
+  const metaEnd = metaStart + metaLength
+  if (bytes.length < metaEnd) {
+    throw new Error('Invalid encrypted paste metadata')
+  }
+  const metadata = JSON.parse(decoder.decode(bytes.slice(metaStart, metaEnd)))
+  return { metadata, encryptedBytes: bytes.slice(metaEnd) }
 }
 
 // ─── Walrus Store ─────────────────────────────────────────────────────────
@@ -106,15 +150,19 @@ export async function getSuiObject(objectId) {
 // ─── URL helpers ─────────────────────────────────────────────────────────
 // Encode paste link: /p/{blobId}#{keyB64}
 // Key is in the fragment so it's never sent to any server
-export function buildPasteUrl(blobId, keyB64) {
-  return `${window.location.origin}/p/${blobId}#${encodeURIComponent(keyB64)}`
+export function buildPasteUrl(blobId, keyB64, suiRef = null) {
+  const url = new URL(`/p/${blobId}`, window.location.origin)
+  if (suiRef) url.searchParams.set('suiRef', suiRef)
+  if (keyB64) url.hash = encodeURIComponent(keyB64)
+  return url.toString()
 }
 
 export function parsePasteUrl() {
   const parts = window.location.pathname.split('/')
   const blobId = parts[parts.length - 1]
   const keyB64 = decodeURIComponent(window.location.hash.slice(1))
-  return { blobId, keyB64 }
+  const suiRef = new URLSearchParams(window.location.search).get('suiRef')
+  return { blobId, keyB64, suiRef }
 }
 
 // ─── LocalStorage paste history ──────────────────────────────────────────

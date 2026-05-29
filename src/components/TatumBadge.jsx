@@ -21,7 +21,7 @@ export default function TatumBadge({ suiRef }) {
   if (status === 'verified') return (
     <a
       className="tatum-badge"
-      href={`https://suiscan.xyz/testnet/object/${suiRef}`}
+      href={`https://suiscan.xyz/mainnet/object/${suiRef}`}
       target="_blank"
       rel="noopener noreferrer"
     >
