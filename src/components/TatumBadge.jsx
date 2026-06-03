@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getSuiObject } from '../lib/walrus'
 
 export default function TatumBadge({ suiRef }) {
-  const [status, setStatus] = useState('loading') // loading | verified | unverified
+  const [status, setStatus] = useState('loading')
 
   useEffect(() => {
     if (!suiRef) { setStatus('unverified'); return }
@@ -13,25 +13,27 @@ export default function TatumBadge({ suiRef }) {
 
   if (status === 'loading') return (
     <span className="tatum-badge">
-      <span className="spinner" style={{ width: 8, height: 8, borderWidth: 1.5 }} />
-      checking chain…
+      <span className="spinner" style={{ width: 8, height: 8, borderWidth: 1 }} />
+      verifying
     </span>
   )
 
   if (status === 'verified') return (
     <a
-      className="tatum-badge"
-      href={`https://suiscan.xyz/mainnet/object/${suiRef}`}
+      className="tatum-badge chip accent"
+      href={`https://suiscan.xyz/testnet/object/${suiRef}`}
       target="_blank"
       rel="noopener noreferrer"
     >
-      ✦ verified on-chain via Tatum
+      <i className="fa-solid fa-circle-check" />
+      verified via tatum
     </a>
   )
 
   return (
-    <span className="tatum-badge" style={{ opacity: 0.5 }}>
-      ○ unverified
+    <span className="chip" style={{ opacity: 0.4 }}>
+      <i className="fa-solid fa-circle-xmark" />
+      unverified
     </span>
   )
 }

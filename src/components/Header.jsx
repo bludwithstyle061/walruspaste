@@ -7,8 +7,12 @@ export default function Header() {
   return (
     <header className="site-header">
       <Link to="/" className="logo">
-        <span className="logo-dot" />
-        WalrusPaste
+        <div className="logo-icon">
+          <i className="fa-solid fa-database" />
+        </div>
+        <div className="logo-text">
+          Walrus<span>Paste</span>
+        </div>
       </Link>
       <div className="header-actions">
         {account ? (
@@ -19,7 +23,10 @@ export default function Header() {
         ) : (
           <ConnectButton />
         )}
-        <Link to="/" className="btn">+ New Paste</Link>
+        <Link to="/" className="btn">
+          <i className="fa-solid fa-plus" />
+          New Paste
+        </Link>
       </div>
     </header>
   )
