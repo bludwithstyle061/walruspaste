@@ -1,5 +1,5 @@
 // ─── Walrus Config ─────────────────────────────────────────────────────────
-export const WALRUS_PUBLISHER = 'https://publisher.walrus.space'
+export const WALRUS_UPLOAD_RELAY = 'https://upload-relay.testnet.walrus.space'
 export const WALRUS_AGGREGATOR = 'https://aggregator.walrus.space'
 export const TATUM_RPC = 'https://sui-mainnet.gateway.tatum.io'
 // Replace with your actual Tatum API key from dashboard.tatum.io
@@ -93,7 +93,7 @@ export function unpackEncryptedPaste(bytes) {
 // ─── Walrus Store ─────────────────────────────────────────────────────────
 export async function storeOnWalrus(dataBytes, epochs = DEFAULT_EPOCHS) {
   const blob = new Blob([dataBytes])
-  const res = await fetch(`${WALRUS_PUBLISHER}/v1/blobs?epochs=${epochs}`, {
+  const res = await fetch(`${WALRUS_UPLOAD_RELAY}/v1/blobs?epochs=${epochs}`, {
     method: 'PUT',
     body: blob,
   })
