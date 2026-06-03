@@ -94,9 +94,12 @@ export function unpackEncryptedPaste(bytes) {
 export async function storeOnWalrus(dataBytes, epochs = DEFAULT_EPOCHS) {
   const blob = new Blob([dataBytes])
   const res = await fetch(`${WALRUS_UPLOAD_RELAY}/v1/blobs?epochs=${epochs}`, {
-    method: 'PUT',
-    body: blob,
-  })
+  method: 'PUT',
+  headers: {
+    'X-Walrus-Tip': '105',
+  },
+  body: blob,
+})
   if (!res.ok) throw new Error(`Walrus store failed: ${res.statusText}`)
   const json = await res.json()
   // Response has either newlyCreated or alreadyCertified
