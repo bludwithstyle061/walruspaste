@@ -1,5 +1,5 @@
 // ─── Walrus Config ─────────────────────────────────────────────────────────
-export const WALRUS_UPLOAD_RELAY = 'https://upload-relay.testnet.walrus.space'
+export const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space'
 export const WALRUS_AGGREGATOR = 'https://aggregator.walrus-testnet.walrus.space'
 export const TATUM_RPC = 'https://sui-testnet.gateway.tatum.io'
 export const TATUM_API_KEY = import.meta.env.VITE_TATUM_API_KEY || ''
@@ -82,13 +82,10 @@ export function unpackEncryptedPaste(bytes) {
 // ─── Walrus Store ─────────────────────────────────────────────────────────
 export async function storeOnWalrus(dataBytes, epochs = DEFAULT_EPOCHS) {
   const blob = new Blob([dataBytes])
-  const res = await fetch(`${WALRUS_UPLOAD_RELAY}/v1/blobs?epochs=${epochs}`, {
-    method: 'PUT',
-    headers: {
-      'X-Walrus-Tip': '105',
-    },
-    body: blob,
-  })
+  const res = await fetch(`${WALRUS_PUBLISHER}/v1/blobs?epochs=${epochs}`, {
+  method: 'PUT',
+  body: blob,
+})
   if (!res.ok) throw new Error(`Walrus store failed: ${res.statusText}`)
   const json = await res.json()
   const blobId =
