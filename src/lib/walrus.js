@@ -1,15 +1,12 @@
 // ─── Walrus Config ─────────────────────────────────────────────────────────
 export const WALRUS_UPLOAD_RELAY = 'https://upload-relay.testnet.walrus.space'
-export const WALRUS_AGGREGATOR = 'https://aggregator.walrus.space'
-export const TATUM_RPC = 'https://sui-mainnet.gateway.tatum.io'
-// Replace with your actual Tatum API key from dashboard.tatum.io
+export const WALRUS_AGGREGATOR = 'https://aggregator.walrus-testnet.walrus.space'
+export const TATUM_RPC = 'https://sui-testnet.gateway.tatum.io'
 export const TATUM_API_KEY = import.meta.env.VITE_TATUM_API_KEY || ''
 
-// Storage epochs are controlled by the active Walrus network.
 export const DEFAULT_EPOCHS = 10
 
 // ─── Encryption Helpers ────────────────────────────────────────────────────
-// Derives a 256-bit AES-GCM key from a random base64 string
 export async function generateEncryptionKey() {
   const key = await crypto.subtle.generateKey(
     { name: 'AES-GCM', length: 256 },
@@ -32,7 +29,6 @@ export async function encryptText(plaintext, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const encoded = new TextEncoder().encode(plaintext)
   const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded)
-  // Pack: first 12 bytes = IV, rest = ciphertext
   const packed = new Uint8Array(iv.length + ciphertext.byteLength)
   packed.set(iv, 0)
   packed.set(new Uint8Array(ciphertext), iv.length)
@@ -56,7 +52,6 @@ export function packEncryptedPaste(metadata, encryptedBytes) {
   const header = new Uint8Array(magicBytes.length + 4)
   header.set(magicBytes, 0)
   new DataView(header.buffer).setUint32(magicBytes.length, metaBytes.length, false)
-
   const packed = new Uint8Array(header.length + metaBytes.length + encryptedBytes.length)
   packed.set(header, 0)
   packed.set(metaBytes, header.length)
@@ -67,7 +62,6 @@ export function packEncryptedPaste(metadata, encryptedBytes) {
 export function unpackEncryptedPaste(bytes) {
   const magicBytes = encoder.encode(ENCRYPTED_FORMAT_MAGIC)
   const hasMagic = magicBytes.every((byte, index) => bytes[index] === byte)
-
   if (!hasMagic) {
     const metaBytes = bytes.slice(0, 512)
     const metaStr = decoder.decode(metaBytes).trim()
@@ -75,17 +69,12 @@ export function unpackEncryptedPaste(bytes) {
     try { metadata = JSON.parse(metaStr) } catch {}
     return { metadata, encryptedBytes: bytes.slice(512) }
   }
-
   const metaLengthOffset = magicBytes.length
-  if (bytes.length < metaLengthOffset + 4) {
-    throw new Error('Invalid encrypted paste format')
-  }
+  if (bytes.length < metaLengthOffset + 4) throw new Error('Invalid encrypted paste format')
   const metaLength = new DataView(bytes.buffer, bytes.byteOffset + metaLengthOffset, 4).getUint32(0, false)
   const metaStart = metaLengthOffset + 4
   const metaEnd = metaStart + metaLength
-  if (bytes.length < metaEnd) {
-    throw new Error('Invalid encrypted paste metadata')
-  }
+  if (bytes.length < metaEnd) throw new Error('Invalid encrypted paste metadata')
   const metadata = JSON.parse(decoder.decode(bytes.slice(metaStart, metaEnd)))
   return { metadata, encryptedBytes: bytes.slice(metaEnd) }
 }
@@ -94,30 +83,26 @@ export function unpackEncryptedPaste(bytes) {
 export async function storeOnWalrus(dataBytes, epochs = DEFAULT_EPOCHS) {
   const blob = new Blob([dataBytes])
   const res = await fetch(`${WALRUS_UPLOAD_RELAY}/v1/blobs?epochs=${epochs}`, {
-  method: 'PUT',
-  headers: {
-    'X-Walrus-Tip': '105',
-  },
-  body: blob,
-})
+    method: 'PUT',
+    headers: {
+      'X-Walrus-Tip': '105',
+    },
+    body: blob,
+  })
   if (!res.ok) throw new Error(`Walrus store failed: ${res.statusText}`)
   const json = await res.json()
-  // Response has either newlyCreated or alreadyCertified
   const blobId =
     json?.newlyCreated?.blobObject?.blobId ||
     json?.alreadyCertified?.blobId
   if (!blobId) throw new Error('No blobId returned from Walrus')
-
   const suiRef =
     json?.newlyCreated?.blobObject?.id ||
     json?.alreadyCertified?.eventOrObject?.Object?.id ||
     null
-
   const endEpoch =
     json?.newlyCreated?.blobObject?.storage?.endEpoch ||
     json?.alreadyCertified?.endEpoch ||
     null
-
   return { blobId, suiRef, endEpoch }
 }
 
@@ -134,7 +119,6 @@ export async function getSuiObject(objectId) {
   if (!objectId) return null
   const headers = { 'Content-Type': 'application/json' }
   if (TATUM_API_KEY) headers['x-api-key'] = TATUM_API_KEY
-
   const res = await fetch(TATUM_RPC, {
     method: 'POST',
     headers,
@@ -151,8 +135,6 @@ export async function getSuiObject(objectId) {
 }
 
 // ─── URL helpers ─────────────────────────────────────────────────────────
-// Encode paste link: /p/{blobId}#{keyB64}
-// Key is in the fragment so it's never sent to any server
 export function buildPasteUrl(blobId, keyB64, suiRef = null) {
   const url = new URL(`/p/${blobId}`, window.location.origin)
   if (suiRef) url.searchParams.set('suiRef', suiRef)
