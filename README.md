@@ -4,7 +4,7 @@
 
 WalrusPaste is a decentralized pastebin for code, notes, logs, and sensitive text. It encrypts paste content in the browser, stores the encrypted bytes on Walrus, and creates share links where the decryption key stays in the URL fragment so it is never sent to Walrus, Tatum, or any app server.
 
-**Live demo:** [walruspaste.vercel.app](https://walruspaste.vercel.app)
+**Live demo:** https://youtu.be/MJhXXBM6U_c
 
 > Current deployment: Sui testnet + Walrus testnet.
 
