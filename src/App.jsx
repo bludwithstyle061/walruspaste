@@ -5,6 +5,7 @@ import TatumBadge from './components/TatumBadge'
 import {
   generateEncryptionKey,
   encryptText,
+  packEncryptedPaste,
   storeOnWalrus,
   buildPasteUrl,
   saveToHistory,
@@ -41,17 +42,14 @@ export default function App() {
       if (encrypt) {
         const { key, keyB64: kb } = await generateEncryptionKey()
         keyB64 = kb
-        const meta = JSON.stringify({
+        const metadata = {
           title: title || 'Untitled',
           createdAt: Date.now(),
           owner: account?.address || null,
           encrypted: true,
-        })
-        const metaBytes = new TextEncoder().encode(meta.padEnd(512, ' '))
+        }
         const encBytes = await encryptText(content, key)
-        dataBytes = new Uint8Array(metaBytes.length + encBytes.length)
-        dataBytes.set(metaBytes, 0)
-        dataBytes.set(encBytes, metaBytes.length)
+        dataBytes = packEncryptedPaste(metadata, encBytes)
       } else {
         const payload = JSON.stringify({
           title: title || 'Untitled',
@@ -64,7 +62,7 @@ export default function App() {
       }
 
       const { blobId, suiRef, endEpoch } = await storeOnWalrus(dataBytes, epochs)
-      const url = encrypt ? buildPasteUrl(blobId, keyB64) : `${window.location.origin}/p/${blobId}`
+      const url = buildPasteUrl(blobId, encrypt ? keyB64 : null, suiRef)
 
       const entry = { blobId, suiRef, endEpoch, title: title || 'Untitled', url, encrypted: encrypt, createdAt: Date.now(), owner: account?.address || null }
       saveToHistory(entry)

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import TatumBadge from '../components/TatumBadge'
-import { readFromWalrus, importKeyFromB64, decryptBytes } from '../lib/walrus'
+import { readFromWalrus, importKeyFromB64, decryptBytes, parsePasteUrl, unpackEncryptedPaste } from '../lib/walrus'
 
 export default function ViewPaste() {
   const { blobId } = useParams()
@@ -17,21 +17,17 @@ export default function ViewPaste() {
     try {
       setStatus('loading')
       const bytes = await readFromWalrus(blobId)
-      const keyB64 = decodeURIComponent(window.location.hash.slice(1))
+      const { keyB64, suiRef } = parsePasteUrl()
 
       if (keyB64) {
         setStatus('decrypting')
-        const metaBytes = bytes.slice(0, 512)
-        const metaStr = new TextDecoder().decode(metaBytes).trim()
-        let meta = {}
-        try { meta = JSON.parse(metaStr) } catch {}
-        const encBytes = bytes.slice(512)
+        const { metadata, encryptedBytes } = unpackEncryptedPaste(bytes)
         const key = await importKeyFromB64(keyB64)
-        const plaintext = await decryptBytes(encBytes, key)
-        setPaste({ ...meta, content: plaintext, encrypted: true })
+        const plaintext = await decryptBytes(encryptedBytes, key)
+        setPaste({ ...metadata, content: plaintext, encrypted: true, suiRef })
       } else {
         const json = JSON.parse(new TextDecoder().decode(bytes))
-        setPaste(json)
+        setPaste({ ...json, suiRef })
       }
       setStatus('done')
     } catch (e) {
@@ -50,8 +46,6 @@ export default function ViewPaste() {
     if (!ts) return ''
     return new Date(ts).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
   }
-
-  const suiRef = new URLSearchParams(window.location.search).get('suiRef')
 
   return (
     <div className="app-shell">
@@ -100,7 +94,7 @@ export default function ViewPaste() {
                     {paste.owner.slice(0, 8)}…{paste.owner.slice(-4)}
                   </span>
                 )}
-                <TatumBadge suiRef={suiRef} />
+                <TatumBadge suiRef={paste.suiRef} />
               </div>
             </div>
 
